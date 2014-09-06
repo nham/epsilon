@@ -1,0 +1,79 @@
+<!-- template.html -->
+<html>
+  <head>
+    <title>Hello React</title>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script src="react-0.11.1.js"></script>
+    <script src="JSXTransformer-0.11.1.js"></script>
+    <script src="jquery-2.1.1.min.js"></script>
+    <script src="kramed-0.4.2.js"></script>
+    <script type="text/jsx">
+      /** @jsx React.DOM */
+var CommentBox = React.createClass({
+    render: function() {
+        return (
+            <div className="commentBox">
+                <h1>commentations</h1>
+                <CommentList data={this.props.data} />
+                <CommentForm />
+            </div>
+        );
+    }
+});
+
+var CommentList = React.createClass({
+    render: function() {
+        var commentNodes = this.props.data.map(function(comment) {
+            return (
+                <Comment author={comment.author}>
+                    {comment.text}
+                </Comment>
+            );
+        });
+        return (
+            <div className="commentList">
+                {commentNodes}
+            </div>
+        );
+    }
+});
+
+var CommentForm = React.createClass({
+    render: function() {
+        return (
+            <div className="commentForm">
+                Hello, world. am form
+            </div>
+        );
+    }
+});
+
+var Comment = React.createClass({
+    render: function() {
+        var rawMarkup = kramed(this.props.children.toString());
+        return (
+            <div className="comment">
+                <h2 className="commentAuthor">
+                    {this.props.author}
+                </h2>
+                <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+            </div>
+        );
+    }
+});
+
+var comments = [
+    {author: "frem dribkin", text: "hemlo"},
+    {author: "Jiblifer nummins", text: "ohohoho **goob** wordrings"}
+];
+
+React.renderComponent(
+    <CommentBox data={comments} />,
+    document.getElementById('content')
+);
+
+    </script>
+  </body>
+</html>
