@@ -165,6 +165,11 @@ def get_next_rev_num(db, pid):
         return fetch['num'] + 1
 
 
+def set_state(state_hash):
+    with open(state_file, 'w') as f:
+        f.write(state_hash)
+
+
 # db is a connection to a sqlite database
 # dt is a datetime string when the page was created
 # page is a dictionary with the following fields:
@@ -172,15 +177,15 @@ def get_next_rev_num(db, pid):
 #   prev  - hash of previous page revision (missing only if this is initial revision)
 #   title - page title
 #   cards - list of card content
+#   tags  - list of tags
 #
 # prev_state  - hash of previous state or None if this is initial state
-# tags - list of hashes of tags
 #
 # TODO: Probably we don't want to have to pass all card content in the future,
 # the client should know exactly what cards changed. so instead we'll take a
 # "delta": if card is unchanged, just send hash, otherwise send content
-def add_page(db, dt, page, prev_state, tags):
-    cur = db.execute('insert into pages () values ()')
+def add_page(db, dt, page, prev_state):
+    cur = db.execute('insert into pages default values')
     pageid = cur.lastrowid
 
     # hash title, card content and insert any objects that are missing
@@ -188,6 +193,10 @@ def add_page(db, dt, page, prev_state, tags):
     cards = []
     for c in page['cards']:
         cards.append(insert_object(db, c))
+
+    tags = []
+    for t in page['tags']:
+        tags.append(insert_object(db, t))
 
     # TODO: check whether prev_page is a valid hash? 1) it may be empty in the case
     # of initial revision, but it might also be a junk hash
@@ -207,9 +216,9 @@ def add_page(db, dt, page, prev_state, tags):
     # create web state object
     # TODO: need to append new page to list from previous state
     wso = web_state_obj(dt, prev_state, [(rev_num, tags)])
+    wso_hash = insert_object(db, wso)
+    set_state(wso_hash)
 
-    # insert it
-    # update current state to the new WSO
 
 
 if __name__ == '__main__':
