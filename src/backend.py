@@ -2,6 +2,7 @@ import hashlib
 import base64
 import os
 import datetime
+import sqlite3
 
 state_file = "state"
 db_file = "epsilon.db"
@@ -61,8 +62,8 @@ def insert_object(db, s):
 
     Returns:
         string. base64 representation of the sha-256 hash of the string
-    h = hash_data(bytes(s, 'utf-8'))
     """
+    h = hash_data(bytes(s, 'utf-8'))
     cur = db.execute('select hash from objects where hash = ?', [h])
 
     if cur.fetchone() == None:
