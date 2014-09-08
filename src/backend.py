@@ -67,7 +67,7 @@ def insert_object(db, s):
     cur = db.execute('select hash from objects where hash = ?', [h])
 
     if cur.fetchone() == None:
-        cur = db.execute('insert into objects (hash, data) values (?, ?)'
+        cur = db.execute('insert into objects (hash, data) values (?, ?)',
                 [h, s])
     return h
 
@@ -145,7 +145,7 @@ def web_state_obj(create_dt, prev, tagged_pages):
     else:
         prev_str = "\nprev {}".format(prev)
 
-    s = "datetime {}{}\n".format(create_dt, prev_str, title)
+    s = "datetime {}{}\n".format(create_dt, prev_str)
 
     for p in tagged_pages:
         s += "page{}\n".format(p[0])
@@ -156,7 +156,8 @@ def web_state_obj(create_dt, prev, tagged_pages):
 
 
 def get_next_rev_num(db, pid):
-    cur = db.execute('select rev from page_revisions where hash = ?', [h])
+    cur = db.execute('select rev from page_revisions where pageid = ? order by rev desc',
+            [pid])
 
     fetch = cur.fetchone()
     if fetch is None:
