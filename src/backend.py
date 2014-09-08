@@ -44,6 +44,19 @@ def init():
     db.close()
 
 
+# db is db connection, s is object string
+# this inserts the object if it's not in the objects table yet and returns
+# the hash
+def insert_object(db, s):
+    h = hash_data(bytes(s, 'utf-8'))
+    cur = db.execute('select hash from objects where hash = ?', [h])
+
+    if cur.fetchone() == None:
+        cur = db.execute('insert into objects (hash, data) values (?, ?)'
+                [h, s])
+    return h
+
+
 def now_string():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -66,7 +79,7 @@ def page_revision_obj(rev_dt, prev, title, cards):
     for c in cards:
         s += "{}\n".format(c)
 
-    return bytes(s, 'utf-8')
+    return s
 
 
 # Returns the bytes for a web state object. It will look like this:
@@ -95,26 +108,58 @@ def web_state_obj(create_dt, prev, tagged_pages):
         for t in p[1]:
             s += "tag{}\n".format(t)
 
-    return bytes(s, 'utf-8')
+    return s
+
+
+def get_next_rev_num(db, pid):
+    cur = db.execute('select rev from page_revisions where hash = ?', [h])
+
+    fetch = cur.fetchone()
+    if fetch is None:
+        return 1
+    else:
+        return fetch['num'] + 1
 
 
 # db is a connection to a sqlite database
+# dt is a datetime string when the page was created
 # page is a dictionary with the following fields:
 # 
-#   datetime - datetime string when page was created
-#   prev  - hash of previous revision (missing only if this is initial revision)
+#   prev  - hash of previous page revision (missing only if this is initial revision)
 #   title - page title
 #   cards - list of card content
+#
+# prev_state  - hash of previous state (missing only if this is initial state)
+# tags - list of hashes of tags
 #
 # TODO: Probably we don't want to have to pass all card content in the future,
 # the client should know exactly what cards changed. so instead we'll take a
 # "delta": if card is unchanged, just send hash, otherwise send content
-def add_page(db, page):
+def add_page(db, dt, page, prev_state, tags):
     cur = db.execute('insert into pages () values ()')
+    pageid = cur.lastrowid
 
     # hash title, card content and insert any objects that are missing
-    # create the string of the revision object
-    # insert into database
+    title_hash = insert_object(db, page['title'])
+    cards = []
+    for c in page['cards']:
+        cards.append(insert_object(db, c))
+
+    # TODO: check whether prev_page is a valid hash? 1) it may be empty in the case
+    # of initial revision, but it might also be a junk hash
+    rev = page_revision_obj(dt, page['prev'], title_hash, cards)
+    rev_hash = insert_object(db, rev)
+
+    rev_num = get_next_rev_num(db, pageid)
+    # insert into page_revisions
+    db.execute('insert into page_revisions (pageid, rev, hash) values (?, ?, ?)',
+            [pageid, rev_num, rev_hash])
+
+    # create web state object
+    wso = web_state_obj(dt, prev_state, [(rev_num, tags)])
+
+    # insert it
+    # update current state to the new WSO
 
 
 if __name__ == '__main__':
