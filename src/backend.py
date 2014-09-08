@@ -60,21 +60,34 @@ def insert_object(db, s):
 def now_string():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-# Returns the bytes for a page revision object. It will look like this:
-#
-#   datetime <date and time of revision>
-#   prev <hash of previous page revision object or empty if this is the initial revision>
-#   title <hash of page title>
-#   <hash of card #1>
-#   <hash of card #2>
-#   ...
-#
-# rev_dt: a datetime string,
-# prev: hash of previous revision
-# title: hash of the page title,
-# cards: list of hashes of card content
+
 def page_revision_obj(rev_dt, prev, title, cards):
-    s = "datetime {}\nprev {}\ntitle {}\n".format(rev_dt, prev, title)
+    """Returns the string representation of a page revision object.
+
+    Args:
+        rev_dt: datetime string of when the revision was created
+        prev:   hash of the previous revision, or None (for the initial revision)
+        title:  hash string of the page title
+        cards:  list of hash strings of card content
+
+    Returns:
+        string. It will look like this:
+
+            datetime <date and time of revision>
+            [prev <hash of previous page revision object>]
+            title <hash of page title>
+            <hash of card #1>
+            <hash of card #2>
+            ...
+
+      where the 'prev' line will be missing exactly when the prev parameter is None
+    """
+    if prev is None:
+        prev_str = ""
+    else:
+        prev_str = "\nprev {}".format(prev)
+
+    s = "datetime {}{}\ntitle {}\n".format(rev_dt, prev_str, title)
 
     for c in cards:
         s += "{}\n".format(c)
@@ -82,26 +95,42 @@ def page_revision_obj(rev_dt, prev, title, cards):
     return s
 
 
-# Returns the bytes for a web state object. It will look like this:
-#
-#   datetime <date and time the state was created>
-#   prev <hash of previous state object or empty if this is initial state>
-#   page <hash of page #1>
-#   tag <hash of tag #1 for page #1>
-#   tag <hash of tag #2 for page #1>
-#   ...
-#   page <hash of page #2>
-#   tag <hash of tag #1 for page #2>
-#   tag <hash of tag #2 for page #2>
-#   ...
-#   ...
-#
-# create_dt: a datetime string
-# prev: hash of previous state
-# tagged_pages: list of pairs where first component is hash of page revision
-#               and second component is list of hash of tags
+
 def web_state_obj(create_dt, prev, tagged_pages):
-    s = "datetime {}\nprev {}\n".format(create_dt, prev, title)
+    """ Returns the string representation of a web state object.
+
+    Args:
+        create_dt:    datetime string of when the state was created
+        prev:         hash string of previous state, or None if this is the initial
+                      state
+        tagged_pages: list of pairs where first component is hash string of page
+                      revision and second component is a list of hashes of tags
+
+    Returns:
+        string. It will look like this:
+
+            datetime <date and time the state was created>
+            [prev <hash of previous state object>]
+            page <hash of page #1>
+            tag <hash of tag #1 for page #1>
+            tag <hash of tag #2 for page #1>
+            ...
+            page <hash of page #2>
+            tag <hash of tag #1 for page #2>
+            tag <hash of tag #2 for page #2>
+            ...
+            ...
+
+        where the 'prev' line will be missing exactly when the prev parameter is None
+
+    """
+
+    if prev is None:
+        prev_str = ""
+    else:
+        prev_str = "\nprev {}".format(prev)
+
+    s = "datetime {}{}\n".format(create_dt, prev_str, title)
 
     for p in tagged_pages:
         s += "page{}\n".format(p[0])
@@ -129,7 +158,7 @@ def get_next_rev_num(db, pid):
 #   title - page title
 #   cards - list of card content
 #
-# prev_state  - hash of previous state (missing only if this is initial state)
+# prev_state  - hash of previous state or None if this is initial state
 # tags - list of hashes of tags
 #
 # TODO: Probably we don't want to have to pass all card content in the future,
@@ -147,7 +176,12 @@ def add_page(db, dt, page, prev_state, tags):
 
     # TODO: check whether prev_page is a valid hash? 1) it may be empty in the case
     # of initial revision, but it might also be a junk hash
-    rev = page_revision_obj(dt, page['prev'], title_hash, cards)
+    if 'prev' in page:
+        prev_rev = page['prev']
+    else:
+        prev_rev = None
+
+    rev = page_revision_obj(dt, prev_rev, title_hash, cards)
     rev_hash = insert_object(db, rev)
 
     rev_num = get_next_rev_num(db, pageid)
@@ -156,6 +190,7 @@ def add_page(db, dt, page, prev_state, tags):
             [pageid, rev_num, rev_hash])
 
     # create web state object
+    # TODO: need to append new page to list from previous state
     wso = web_state_obj(dt, prev_state, [(rev_num, tags)])
 
     # insert it
