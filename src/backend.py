@@ -14,8 +14,16 @@ class App:
         self.db.close()
 
 
-# returns a base64-encoded string of the hash
 def hash_data(data):
+    """Make a hash string from some data.
+
+    Args:
+        data: byte sequence to be hashed
+
+    Returns:
+        a string which is the base64-encoded representation of the sha-256 hash
+        of the data
+    """
     hash_ob = hashlib.sha256(data)
     digest = hash_ob.digest()
     hashstr = base64.b64encode(digest).decode('utf-8')
@@ -44,11 +52,17 @@ def init():
     db.close()
 
 
-# db is db connection, s is object string
-# this inserts the object if it's not in the objects table yet and returns
-# the hash
 def insert_object(db, s):
+    """Hashes data. Inserts it into the database if it's not there already
+
+    Args:
+        db: connection to a sqlite database
+        s:  string
+
+    Returns:
+        string. base64 representation of the sha-256 hash of the string
     h = hash_data(bytes(s, 'utf-8'))
+    """
     cur = db.execute('select hash from objects where hash = ?', [h])
 
     if cur.fetchone() == None:
