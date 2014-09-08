@@ -1,56 +1,47 @@
 import hashlib
 import base64
-import zlib
 import os
 import datetime
 
-store_dir = "store"
-obj_dir   = os.path.join(store_dir, "objects")
-head_file = os.path.join(store_dir, "HEAD")
+state_file = "state"
+db_file = "epsilon.db"
+
+class App:
+    def __init__(self):
+        self.db = connect_db()
+
+    def teardown(self):
+        self.db.close()
+
 
 # returns a base64-encoded string of the hash
 def hash_data(data):
     hash_ob = hashlib.sha256(data)
     digest = hash_ob.digest()
     hashstr = base64.b64encode(digest).decode('utf-8')
-    hashstr = hashstr.replace("+", "-")
-    hashstr = hashstr.replace("/", "_")
-    hashstr = hashstr.replace("=", ".")
     return hashstr
 
-# takes a hash and returns the path that the content corresponding to that
-# hash will be written to. the path is relative to obj_dir
-def make_rel_hash_path(h):
-    return os.path.join(h[:2], h[2:])
 
-# takes a hash and returns the path to the file in the object store, relative
-# to current directory
-def path_to_obj(h):
-    return os.path.join(obj_dir, make_rel_hash_path(h))
+def connect_db():
+    """Connects to the database. Returns the connection."""
+    rv = sqlite3.connect(db_file)
+    rv.row_factory = sqlite3.Row
+    return rv
 
-# store needs to be initted before calling this
-def write_data(data):
-    da_hash = hash_data(data)
-    fpath = path_to_obj(da_hash)
-    os.makedirs(os.path.dirname(fpath))
-    with open(fpath, 'wb') as f:
-        f.write(zlib.compress(data))
-        f.close()
-
-    return da_hash
-
-def read_data(h):
-    with open(path_to_obj(h), 'rb') as f:
-        content = f.read()
-        return zlib.decompress(content)
+# db is a connection to a sqlite database
+def init_db(db):
+    with open('schema.sql', 'r') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
 
 
-def init_store():
-    if not os.path.exists(obj_dir):
-        os.makedirs(obj_dir)
+def init():
+    if not os.path.exists(state_file):
+        open(state_file, 'a').close()
 
-    if not os.path.exists(head_file):
-        open(head_file, 'a').close()
+    db = connect_db()
+    init_db(db)
+    db.close()
 
 
 def now_string():
@@ -105,3 +96,27 @@ def web_state_obj(create_dt, prev, tagged_pages):
             s += "tag{}\n".format(t)
 
     return bytes(s, 'utf-8')
+
+
+# db is a connection to a sqlite database
+# page is a dictionary with the following fields:
+# 
+#   datetime - datetime string when page was created
+#   prev  - hash of previous revision (missing only if this is initial revision)
+#   title - page title
+#   cards - list of card content
+#
+# TODO: Probably we don't want to have to pass all card content in the future,
+# the client should know exactly what cards changed. so instead we'll take a
+# "delta": if card is unchanged, just send hash, otherwise send content
+def add_page(db, page):
+    cur = db.execute('insert into pages () values ()')
+
+    # hash title, card content and insert any objects that are missing
+    # create the string of the revision object
+    # insert into database
+
+
+if __name__ == '__main__':
+    app = App()
+    app.teardown()
