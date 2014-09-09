@@ -55,3 +55,7 @@ create table web_state_pages (
     FOREIGN KEY(stateid) REFERENCES web_states(id),
     FOREIGN KEY(pagerevid) REFERENCES page_revisions(id),
 );
+
+
+create unique index card_content ON cards (content);
+create unique index tag_name ON tags (name);

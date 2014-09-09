@@ -1,4 +1,6 @@
 class WebState:
+    # TODO: think harder about whether we should initialize with a "dummy
+    # state" containing no pages
     @staticmethod
     def get(db, state_id):
         """Get the data of a web state object.
@@ -8,7 +10,8 @@ class WebState:
             state_id - id of the entry in the web_states table
 
         Returns:
-            dict with 3 keys:
+            None if the web hasn't been initialized
+            otherwise, dict with 3 keys:
               - datetime: datetime string
               - prev: id of the previous state, or None
               - pagerevs: list of ids of page revisions
@@ -16,7 +19,11 @@ class WebState:
         sql = 'select datetime, prev from web_states where id = ?'
         cur = db.execute(sql, [state_id])
         state = cur.fetchone()
-        state = dict(state)
+
+        if state is None:
+            return None
+        else:
+            state = dict(state)
 
         sql = 'select wsp.pagerevid from web_state_pages wsp where wsp.stateid = ?'
         cur = db.execute(sql, [state_id])
@@ -53,6 +60,18 @@ class WebState:
 
         db.commit()
 
+    @staticmethod
+    def current_id(db):
+        """Returns the current state or None if uninitialized."""
+        sql = 'select id from web_states order by id desc'
+        cur = db.execute(sql, [])
+        state = cur.fetchone()
+
+        if state is None:
+            return None
+        else:
+            return state['id']
+
 
 class PageRevision:
     @staticmethod
@@ -68,6 +87,9 @@ class PageRevision:
                         - title: page title string
                         - cards: list of card ids
                         - tags: set of tag ids
+
+        Returns:
+            int, the id of the new page revision
         """
         # get the new revision number
         next_revnum = Page.get_latest_rev_num(db, rev_data['pageid']) + 1
@@ -90,6 +112,7 @@ class PageRevision:
             db.execute(sql, [revid, t])
 
         db.commit()
+        return revid
 
 
 class Page:
@@ -125,9 +148,46 @@ class Tag:
         db.commit()
         return cur.lastrowid
 
+    @staticmethod
+    def get_id(db, tag_name):
+        cur = db.execute('select id from tags where name = ?', [tag_name])
+        fetch = cur.fetchone()
+        if fetch is not None:
+            return fetch['id']
+        else:
+            return None
+
+    @staticmethod
+    def ensure_present(db, tag_name):
+        """Insert tag if not present. Return the tag id."""
+        tid = Tag.get_id(db, tag_name)
+        if tid is None:
+            return Tag.add(db, tag_name)
+        else:
+            return tid
+
+
 class Card:
     @staticmethod
     def add(db, card_content):
         cur = db.execute('insert into cards (content) values (?)', [card_content])
         db.commit()
         return cur.lastrowid
+
+    @staticmethod
+    def get_id(db, card_content):
+        cur = db.execute('select id from cards where content = ?', [card_content])
+        fetch = cur.fetchone()
+        if fetch is not None:
+            return fetch['id']
+        else:
+            return None
+
+    @staticmethod
+    def ensure_present(db, card_content):
+        """Insert card if not present. Return the card id."""
+        cid = Card.get_id(db, card_content)
+        if cid is None:
+            return Card.add(db, card_content)
+        else:
+            return cid
