@@ -148,9 +148,9 @@ def web_state_obj(create_dt, prev, tagged_pages):
     s = "datetime {}{}\n".format(create_dt, prev_str)
 
     for p in tagged_pages:
-        s += "page{}\n".format(p[0])
+        s += "page {}\n".format(p[0])
         for t in p[1]:
-            s += "tag{}\n".format(t)
+            s += "tag {}\n".format(t)
 
     return s
 
@@ -219,6 +219,8 @@ def add_page(db, dt, page, prev_state):
     wso = web_state_obj(dt, prev_state, [(rev_num, tags)])
     wso_hash = insert_object(db, wso)
     set_state(wso_hash)
+
+    db.commit()
 
 
 
