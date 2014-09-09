@@ -67,7 +67,7 @@ class PageRevision:
                         - datetime: datetime string
                         - title: page title string
                         - cards: list of card ids
-                        - tags: list of tag ids
+                        - tags: set of tag ids
         """
         # get the new revision number
         next_revnum = Page.get_latest_rev_num(db, rev_data['pageid']) + 1
@@ -80,9 +80,10 @@ class PageRevision:
                                rev_data['datetime'], rev_data['title']])
         revid = cur.lastrowid
 
-        sql = 'insert into page_rev_cards (revid, cardid) values (?, ?)'
-        for c in rev_data['cards']:
-            db.execute(sql, [revid, c])
+        sql = """insert into page_rev_cards (revid, cardid, num)
+                 values (?, ?, ?)"""
+        for i, c in enumerate(rev_data['cards']):
+            db.execute(sql, [revid, c, i])
 
         sql = 'insert into page_rev_tags (revid, tagid) values (?, ?)'
         for t in rev_data['tags']:
