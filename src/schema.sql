@@ -1,5 +1,11 @@
 drop table if exists pages;
+drop table if exists tags;
+drop table if exists cards;
 drop table if exists page_revisions;
+drop table if exists page_rev_cards;
+drop table if exists page_rev_tags;
+drop table if exists web_states;
+drop table if exists web_state_pages;
 
 create table pages (
     id integer primary key autoincrement

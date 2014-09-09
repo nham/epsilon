@@ -27,9 +27,6 @@ def init_db(db):
 
 
 def init():
-    if not os.path.exists(state_file):
-        open(state_file, 'a').close()
-
     db = connect_db()
     init_db(db)
     db.close()
@@ -77,7 +74,7 @@ def add_page(db, dt, title, cards, tags):
     # create new web state
     state = models.WebState.get(db, models.WebState.current_id(db))
     models.WebState.new(db, {'datetime': dt,
-                            'pagerevs': state['pagerevs'] + [rev_id]})
+                             'pagerevs': state['pagerevs'] + [rev_id]})
 
 
 if __name__ == '__main__':

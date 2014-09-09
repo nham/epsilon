@@ -176,6 +176,7 @@ class Card:
 
     @staticmethod
     def get_id(db, card_content):
+        """Gets the id associated with some card content."""
         cur = db.execute('select id from cards where content = ?', [card_content])
         fetch = cur.fetchone()
         if fetch is not None:
