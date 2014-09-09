@@ -69,6 +69,8 @@ def insert_object(db, s):
     if cur.fetchone() == None:
         cur = db.execute('insert into objects (hash, data) values (?, ?)',
                 [h, s])
+        db.commit()
+
     return h
 
 
@@ -166,7 +168,7 @@ def get_next_rev_num(db, pid):
         return fetch['num'] + 1
 
 
-def set_state(state_hash):
+def write_state_file(state_hash):
     with open(state_file, 'w') as f:
         f.write(state_hash)
 
@@ -199,8 +201,7 @@ def add_page(db, dt, page, prev_state):
     for t in page['tags']:
         tags.append(insert_object(db, t))
 
-    # TODO: check whether prev_page is a valid hash? 1) it may be empty in the case
-    # of initial revision, but it might also be a junk hash
+    # TODO: check whether prev_page is a valid hash?
     if 'prev' in page:
         prev_rev = page['prev']
     else:
@@ -214,14 +215,18 @@ def add_page(db, dt, page, prev_state):
     db.execute('insert into page_revisions (pageid, rev, hash) values (?, ?, ?)',
             [pageid, rev_num, rev_hash])
 
-    # create web state object
     # TODO: need to append new page to list from previous state
-    wso = web_state_obj(dt, prev_state, [(rev_num, tags)])
+    set_state(db, dt, prev_state, [(rev_num, tags)])
+
+
+
+def set_state(db, create_dt, prev, tagged_pages):
+    """Create web state object and write it to the database and state file.
+    """
+
+    wso = web_state_obj(create_dt, prev, tagged_pages)
     wso_hash = insert_object(db, wso)
-    set_state(wso_hash)
-
-    db.commit()
-
+    write_state_file(wso_hash)
 
 
 if __name__ == '__main__':
