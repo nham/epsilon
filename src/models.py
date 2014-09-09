@@ -51,6 +51,8 @@ class WebState:
             sql = 'insert into web_state_pages (stateid, pagerevid) values (?, ?)'
             cur = db.execute(sql, [stateid, rev])
 
+        db.commit()
+
 
 class PageRevision:
     @staticmethod
@@ -63,11 +65,68 @@ class PageRevision:
                         - pageid: page id
                         - prev: idea of the previous page revision, or None
                         - datetime: datetime string
-                        - title: id of page title
+                        - title: page title string
                         - cards: list of card ids
                         - tags: list of tag ids
         """
+        # get the new revision number
+        next_revnum = Page.get_latest_rev_num(db, rev_data['pageid']) + 1
+
         sql = """
             insert into page_revisions (pageid, prev, num, datetime, title)
             values (?, ?, ?, ?, ?)
             """
+        cur = db.execute(sql, [rev_data['pageid'], rev_data['prev'], next_revnum,
+                               rev_data['datetime'], rev_data['title']])
+        revid = cur.lastrowid
+
+        sql = 'insert into page_rev_cards (revid, cardid) values (?, ?)'
+        for c in rev_data['cards']:
+            db.execute(sql, [revid, c])
+
+        sql = 'insert into page_rev_tags (revid, tagid) values (?, ?)'
+        for t in rev_data['tags']:
+            db.execute(sql, [revid, t])
+
+        db.commit()
+
+
+class Page:
+    @staticmethod
+    def add(db):
+        """Create a new page.
+
+        Args:
+            db - sqlite connection
+
+        Returns:
+            int, the id of the new page
+        """
+        cur = db.execute('insert into pages default values')
+        db.commit()
+        return cur.lastrowid
+
+    @staticmethod
+    def get_latest_rev_num(db, page_id):
+        sql = 'select num from page_revisions where pageid = ? order by num desc'
+        cur = db.execute(sql, [page_id])
+        curr_revnum = curr.fetchone()
+        if curr_revnum is None:
+            return 0
+        else:
+            return curr_revnum['num']
+
+
+class Tag:
+    @staticmethod
+    def add(db, tag_name):
+        cur = db.execute('insert into tags (name) values (?)', [tag_name])
+        db.commit()
+        return cur.lastrowid
+
+class Card:
+    @staticmethod
+    def add(db, card_content):
+        cur = db.execute('insert into cards (content) values (?)', [card_content])
+        db.commit()
+        return cur.lastrowid

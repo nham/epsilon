@@ -15,21 +15,15 @@ create table cards (
     content text not null
 );
 
-create table titles (
-    id integer primary key autoincrement,
-    title text not null
-);
-
 create table page_revisions (
     id integer primary key autoincrement,
     pageid integer not null,
     prev integer,
     num integer not null,
     datetime text not null,
-    title integer not null,
+    title text not null,
     FOREIGN KEY(pageid) REFERENCES pages(id)
     FOREIGN KEY(prev) REFERENCES page_revisions(id)
-    FOREIGN KEY(title) REFERENCES titles(id)
 );
 
 create table page_rev_cards (
