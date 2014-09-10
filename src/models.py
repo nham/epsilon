@@ -14,7 +14,7 @@ class WebState:
             otherwise, dict with 3 keys:
               - datetime: datetime string
               - prev: id of the previous state, or None
-              - pagerevs: list of ids of page revisions
+              - page_revs: list of ids of page revisions
         """
         sql = 'select datetime, prev from web_states where id = ?'
         cur = db.execute(sql, [state_id])
@@ -27,7 +27,7 @@ class WebState:
 
         sql = 'select wsp.pagerevid from web_state_pages wsp where wsp.stateid = ?'
         cur = db.execute(sql, [state_id])
-        state['pagerevs'] = [rev['pagerevid'] for rev in cur.fetchall()]
+        state['page_revs'] = [rev['pagerevid'] for rev in cur.fetchall()]
 
         return state
 
@@ -40,7 +40,7 @@ class WebState:
             db         - sqlite connection
             state_data - dict with the following data:
                            - datetime: datetime string
-                           - pagerevs: list of page revision ids
+                           - page_revs: list of page revision ids
 
         """
 
@@ -54,7 +54,7 @@ class WebState:
         cur = db.execute(sql, [state_data['datetime'], prev])
         stateid = cur.lastrowid
 
-        for rev in state_data['pagerevs']:
+        for rev in state_data['page_revs']:
             sql = 'insert into web_state_pages (stateid, pagerevid) values (?, ?)'
             cur = db.execute(sql, [stateid, rev])
 
@@ -72,8 +72,33 @@ class WebState:
         else:
             return state['id']
 
+    @staticmethod
+    def get_current(db):
+        return WebState.get(db, WebState.current_id(db))
+
 
 class PageRevision:
+    @staticmethod
+    def get(db, rev_id):
+        """Get page revision by id."""
+        sql = """SELECT pageid, prev, num, datetime, title from page_revisions pr
+              WHERE pr.id = ?"""
+        cur = db.execute(sql, [rev_id])
+        rev = cur.fetchone()
+        if rev is None:
+            return None
+
+        page_rev = dict(rev)
+
+        sql = """SELECT cardid from page_rev_cards WHERE revid = ?"""
+        page_rev['cards'] = [row['cardid'] for row in cur.fetchall()]
+
+        sql = """SELECT tagid from page_rev_tags WHERE revid = ?"""
+        page_rev['tags'] = [row['tagid'] for row in cur.fetchall()]
+
+        return page_rev
+
+
     @staticmethod
     def add(db, rev_data):
         """Create a new page revision object.
@@ -166,6 +191,20 @@ class Tag:
         else:
             return tid
 
+    @staticmethod
+    def get_active(db):
+        """Get all tags used by most recent revisions of pages"""
+        sid = WebState.current_id(db)
+        if sid is None:
+            return []
+
+        sql = """SELECT t.id, t.name from web_state_pages wsp
+              LEFT JOIN page_rev_tags prt ON prt.revid = wsp.pagerevid
+              LEFT JOIN tags t ON t.id = prt.tagid
+              WHERE wsp.stateid = ?"""
+        cur = db.execute(sql, [sid])
+        return [dict(row) for row in cur.fetchall()]
+
 
 class Card:
     @staticmethod
@@ -192,3 +231,18 @@ class Card:
             return Card.add(db, card_content)
         else:
             return cid
+
+
+    @staticmethod
+    def get_active(db):
+        """Get all cards used by most recent revisions of pages"""
+        sid = WebState.current_id(db)
+        if sid is None:
+            return []
+
+        sql = """SELECT c.id, c.content from web_state_pages wsp
+              LEFT JOIN page_rev_cards prc ON prc.revid = wsp.pagerevid
+              LEFT JOIN cards c ON c.id = prc.cardid
+              WHERE wsp.stateid = ?"""
+        cur = db.execute(sql, [sid])
+        return [dict(row) for row in cur.fetchall()]

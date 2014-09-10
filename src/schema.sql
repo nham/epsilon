@@ -28,7 +28,7 @@ create table page_revisions (
     num integer not null,
     datetime text not null,
     title text not null,
-    FOREIGN KEY(pageid) REFERENCES pages(id)
+    FOREIGN KEY(pageid) REFERENCES pages(id),
     FOREIGN KEY(prev) REFERENCES page_revisions(id)
 );
 
@@ -59,7 +59,7 @@ create table web_state_pages (
     stateid integer not null,
     pagerevid integer not null,
     FOREIGN KEY(stateid) REFERENCES web_states(id),
-    FOREIGN KEY(pagerevid) REFERENCES page_revisions(id),
+    FOREIGN KEY(pagerevid) REFERENCES page_revisions(id)
 );
 
 

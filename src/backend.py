@@ -72,9 +72,9 @@ def add_page(db, dt, title, cards, tags):
     rev_id = models.PageRevision.add(db, page_rev)
 
     # create new web state
-    state = models.WebState.get(db, models.WebState.current_id(db))
+    state = models.WebState.get_current(db)
     models.WebState.new(db, {'datetime': dt,
-                             'pagerevs': state['pagerevs'] + [rev_id]})
+                             'page_revs': state['page_revs'] + [rev_id]})
 
 
 if __name__ == '__main__':
