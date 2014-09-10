@@ -91,9 +91,11 @@ class PageRevision:
         page_rev = dict(rev)
 
         sql = """SELECT cardid from page_rev_cards WHERE revid = ?"""
+        cur = db.execute(sql, [rev_id])
         page_rev['cards'] = [row['cardid'] for row in cur.fetchall()]
 
         sql = """SELECT tagid from page_rev_tags WHERE revid = ?"""
+        cur = db.execute(sql, [rev_id])
         page_rev['tags'] = [row['tagid'] for row in cur.fetchall()]
 
         return page_rev
@@ -159,7 +161,7 @@ class Page:
     def get_latest_rev_num(db, page_id):
         sql = 'select num from page_revisions where pageid = ? order by num desc'
         cur = db.execute(sql, [page_id])
-        curr_revnum = curr.fetchone()
+        curr_revnum = cur.fetchone()
         if curr_revnum is None:
             return 0
         else:
