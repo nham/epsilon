@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <title>epsilon</title>
+  </head>
+  <body>
+    <h1>epsilon</h1>
+    <div id="content"></div>
+    <script src="static/react-0.11.1.js"></script>
+    <script src="static/JSXTransformer-0.11.1.js"></script>
+    <script src="static/jquery-2.1.1.min.js"></script>
+    <script type="text/jsx">
+      /** @jsx React.DOM */
+var PageDisplay = React.createClass({
+    getInitialState: function() {
+        return {data: []};
+    },
+
+  loadWebFromServer: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      success: function(data) {
+    console.log(data);
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+
+    componentDidMount: function() {
+        this.loadWebFromServer();
+    },
+
+    render: function() {
+        return (
+            <div className="pageDisplay">
+                <PageList data={this.state.data} />
+            </div>
+        );
+    }
+});
+
+var PageList = React.createClass({
+    render: function() {
+        var pageNodes = [];
+        for (id in this.props.data.page_revs) {
+            var page = this.props.data.page_revs[id];
+            pageNodes.push(<Page title={page.title} tags={page.tags} />);
+        }
+
+        return (
+            <div className="pageList">
+                {pageNodes}
+            </div>
+        );
+    }
+});
+
+var Page = React.createClass({
+    render: function() {
+        var tagTxt = "";
+        for (var i = 0; i < this.props.tags.length; i++) {
+            if (i > 0) { tagTxt += ", "; }
+            tagTxt += this.props.tags[i];
+        }
+        return (
+            <div className="page">
+                <h2 className="pageTitle">
+                    {this.props.title}
+                </h2>
+                <span className="pageTags">
+                    {tagTxt}
+                </span>
+            </div>
+        );
+    }
+});
+
+React.renderComponent(
+    <PageDisplay url="/web" />,
+    document.getElementById('content')
+);
+
+    </script>
+  </body>
+</html>
