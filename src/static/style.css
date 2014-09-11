@@ -1,0 +1,12 @@
+body {
+    font-family: sans-serif;
+}
+
+#content {
+    max-width: 1000px;
+    margin: 20px auto;
+}
+
+.page {
+    border: 1px solid #333;
+}
