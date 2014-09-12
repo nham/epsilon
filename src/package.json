@@ -1,0 +1,20 @@
+{
+  "name": "epsilon",
+  "version": "0.0.1",
+  "description": "Client portion of a personal notebook app.",
+  "main": "js/app.js",
+  "dependencies": {
+    "jquery": "^2.1.1",
+    "react": "^0.11.1"
+  },
+  "devDependencies": {
+      "browserify": "~5.11.2",
+      "reactify": "~0.14.0"
+  },
+  "scripts": {
+    "build": "browserify . > static/bundle.js"
+  },
+  "browserify": {
+      "transform": ["reactify"]
+  }
+}
