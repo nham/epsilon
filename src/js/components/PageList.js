@@ -7,7 +7,7 @@ var PageList = React.createClass({
         var pageNodes = [];
         for (id in this.props.data.page_revs) {
             var page = this.props.data.page_revs[id];
-            pageNodes.push(<Page title={page.title} tags={page.tags} />);
+            pageNodes.push(<Page key={id} title={page.title} tags={page.tags} />);
         }
 
         return (
