@@ -1,5 +1,6 @@
 /** @jsx React.DOM */
 var React = require('react');
+var Card = require('./Card');
 
 var Page = React.createClass({
     render: function() {
@@ -8,6 +9,14 @@ var Page = React.createClass({
             if (i > 0) { tagTxt += ", "; }
             tagTxt += this.props.tags[i];
         }
+
+        var cardNodes = [];
+        for (id in this.props.cards) {
+            var card = this.props.cards[id];
+            cardNodes.push(<Card key={card.id}
+                                 content={card.content} />);
+        }
+
         return (
             <div className="page">
                 <h2 className="pageTitle">
@@ -16,6 +25,7 @@ var Page = React.createClass({
                 <span className="pageTags">
                     {tagTxt}
                 </span>
+                {cardNodes}
             </div>
         );
     }

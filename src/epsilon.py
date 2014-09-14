@@ -40,8 +40,16 @@ def index():
 
     state['page_revs'] = page_revs
 
-    state['cards'] = models.Card.get_active(db)
-    state['tags'] = models.Tag.get_active(db)
+    state['cards'] = {}
+    cards = models.Card.get_active(db)
+    for card in cards:
+        state['cards'][card['id']] = {'content': card['content']}
+
+    state['tags'] = {}
+    tags = models.Tag.get_active(db)
+    for tag in tags:
+        state['tags'][tag['id']] = {'name': tag['name']}
+
     return jsonify(state)
 
 

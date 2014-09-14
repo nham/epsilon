@@ -10,3 +10,7 @@ body {
 .page {
     border: 1px solid #333;
 }
+
+div.card {
+    border-top: 4px dotted #333;
+}
