@@ -32,6 +32,20 @@ class WebState:
 
         return state
 
+    @staticmethod
+    def get_all(db):
+        sql = 'select id from web_states'
+        cur = db.execute(sql)
+
+        states = []
+        if cur is None:
+            return states
+        else:
+            for row in cur.fetchall():
+                states.append(WebState.get(db, row['id']))
+
+        return states
+
     # state data contains the datetime and the set of tagged pages
     @staticmethod
     def new(db, state_data):
@@ -208,6 +222,13 @@ class Tag:
         cur = db.execute(sql, [sid])
         return [dict(row) for row in cur.fetchall()]
 
+    @staticmethod
+    def get_all(db):
+        """Get all tags"""
+        sql = 'SELECT id, name from tags'
+        cur = db.execute(sql)
+        return [dict(row) for row in cur.fetchall()]
+
 
 class Card:
     @staticmethod
@@ -248,4 +269,11 @@ class Card:
               LEFT JOIN cards c ON c.id = prc.cardid
               WHERE wsp.stateid = ?"""
         cur = db.execute(sql, [sid])
+        return [dict(row) for row in cur.fetchall()]
+
+    @staticmethod
+    def get_all(db):
+        """Get all cards"""
+        sql = 'SELECT id, content from cards'
+        cur = db.execute(sql)
         return [dict(row) for row in cur.fetchall()]

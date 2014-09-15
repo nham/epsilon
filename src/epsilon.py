@@ -11,8 +11,38 @@ app = Flask(__name__)
 def root():
     return app.send_static_file('index.html')
 
-@app.route('/web')
-def index():
+@app.route('/states')
+def all_states():
+    """Returns data for all web states."""
+    db = get_db()
+    data = {}
+
+    data['cards'] = {}
+    for card in models.Card.get_all(db):
+        data['cards'][card['id']] = {'content': card['content']}
+
+    data['tags'] = {}
+    for tag in models.Tag.get_all(db):
+        data['tags'][tag['id']] = {'name': tag['name']}
+
+    data['curr_state'] = models.WebState.current_id(db)
+
+    data['states'] = {}
+    for state in models.WebState.get_all(db):
+        page_revs = {}
+        for rev_id in state['page_revs']:
+            page_revs[rev_id] = models.PageRevision.get(db, rev_id)
+
+        state['page_revs'] = page_revs
+
+        sid = state['id']
+        data['states'][sid] = state
+
+
+    return jsonify(data)
+
+@app.route('/states/current')
+def current_state():
     """Returns JSON data needed to populate the main interface.
 
     TODO: What should this return, exactly? a sensible first approach is:
