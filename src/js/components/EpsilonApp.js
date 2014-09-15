@@ -1,6 +1,7 @@
 /** @jsx React.DOM */
 var $ = require('jquery');
 var PageList = require('./PageList');
+var PageForm = require('./PageForm');
 var React = require('react');
 
 var EpsilonApp = React.createClass({
@@ -30,6 +31,7 @@ var EpsilonApp = React.createClass({
     render: function() {
         return (
             <div className="pageDisplay">
+                <PageForm />
                 <PageList data={this.state.data} />
             </div>
         );

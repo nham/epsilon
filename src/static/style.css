@@ -3,7 +3,7 @@ body {
 }
 
 #eps_app {
-    max-width: 1000px;
+    max-width: 800px;
     margin: 20px auto;
 }
 
@@ -13,4 +13,17 @@ body {
 
 div.card {
     border-top: 4px dotted #333;
+}
+
+.pageForm input {
+    width: 95%;
+}
+
+.pageForm textarea {
+    width: 95%;
+    height: 250px;
+}
+
+.pageForm .title {
+    font-size: 26px;
 }
