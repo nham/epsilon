@@ -11,12 +11,13 @@ class WebState:
 
         Returns:
             None if the web hasn't been initialized
-            otherwise, dict with 3 keys:
+            otherwise, dict with 4 keys:
+              - id: state id
               - datetime: datetime string
               - prev: id of the previous state, or None
               - page_revs: list of ids of page revisions
         """
-        sql = 'select datetime, prev from web_states where id = ?'
+        sql = 'select datetime, prev, id from web_states where id = ?'
         cur = db.execute(sql, [state_id])
         state = cur.fetchone()
 
