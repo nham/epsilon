@@ -1,31 +1,27 @@
 /** @jsx React.DOM */
-var $ = require('jquery');
 var PageList = require('./PageList');
 var PageForm = require('./PageForm');
 var React = require('react');
+var WebStore = require('../WebStore');
+
+var getStateFromStore = function() {
+    return {
+        data: WebStore.getCurrent()
+    };
+};
 
 var EpsilonApp = React.createClass({
 
     getInitialState: function() {
-        return {data: []};
-    },
-
-    loadWebFromServer: function() {
-        $.ajax({
-            url: this.props.url,
-            dataType: 'json',
-            success: function(data) {
-              console.log(data);
-              this.setState({data: data});
-            }.bind(this),
-            error: function(xhr, status, err) {
-              console.error(this.props.url, status, err.toString());
-            }.bind(this)
-        });
+        return getStateFromStore();
     },
 
     componentDidMount: function() {
-        this.loadWebFromServer();
+        WebStore.addChangeListener(this._onChange);
+    },
+
+    componentWillUnmount: function() {
+        WebStore.removeChangeListener(this._onChange);
     },
 
     render: function() {
@@ -35,6 +31,10 @@ var EpsilonApp = React.createClass({
                 <PageList data={this.state.data} />
             </div>
         );
+    },
+
+    _onChange: function() {
+        this.setState(getStateFromStore());
     }
 
 });
